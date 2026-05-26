@@ -1,0 +1,59 @@
+name: CI - 114062604
+
+on:
+  push:
+    branches:
+      - '**' # 所有 branch push 都跑
+  pull_request: # PR 也跑
+
+permissions:
+  contents: read
+  checks: write # test-reporter 寫 check 結果用
+  pull-requests: write # 在 PR 上貼測試結果用
+
+jobs:
+  ci:
+    name: typecheck / prettier / test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # 三個檢查
+      - name: TypeScript typecheck
+        run: npm run typecheck
+
+      - name: Prettier format check
+        run: npm run format:check
+
+      - name: Run tests (output JUnit XML)
+        run: |
+          mkdir -p test-results
+          npx vitest run --reporter=default --reporter=junit --outputFile=./test-results/junit.xml
+
+      # 將測試結果顯示於 Actions
+      - name: Publish Test Report
+        uses: dorny/test-reporter@v1
+        if: always() # 即使測試失敗也要產出報告
+        with:
+          name: Vitest Results
+          path: test-results/junit.xml
+          reporter: jest-junit
+          fail-on-error: false
+
+      - name: Upload JUnit artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: junit-report
+          path: test-results/junit.xml
