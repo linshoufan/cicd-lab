@@ -1,9 +1,10 @@
 import Fastify, { FastifyServerOptions } from 'fastify';
 
 export function buildApp(options: FastifyServerOptions = {}) {
-  const app = Fastify({
+  const app =      Fastify({
     logger: options.logger ?? true,
-    ...options
+    ...optionsgit commit -am "test: break prettier"
+git push
   });
 
   app.get('/', async () => {
